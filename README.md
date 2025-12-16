@@ -6,6 +6,7 @@
 - Enabled RX interrupts and implemented a basic RX callback.
 - Debugged reception using GPIO toggling.
 
+**Next Goals**
 - Add UART debug prints for received CAN frames.
 - Add CAN transmit test.
 - Implement loopback mode for self-testing.
