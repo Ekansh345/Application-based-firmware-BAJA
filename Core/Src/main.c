@@ -42,21 +42,29 @@
 /* Private variables ---------------------------------------------------------*/
 FDCAN_HandleTypeDef hfdcan1;
 
-/* USER CODE BEGIN PV */
+UART_HandleTypeDef huart2;
 
+/* USER CODE BEGIN PV */
+FDCAN_TxHeaderTypeDef   TxHeader;
+uint8_t                 TxData[8];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_FDCAN1_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int _write(int file, char *ptr, int len)
+{
+    HAL_UART_Transmit(&huart2, (uint8_t*)ptr, len, HAL_MAX_DELAY);
+    return len;
+}
 /* USER CODE END 0 */
 
 /**
@@ -89,6 +97,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_FDCAN1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   FDCAN_FilterTypeDef filter;
   filter.IdType = FDCAN_STANDARD_ID;
@@ -104,6 +113,16 @@ int main(void)
   HAL_FDCAN_ActivateNotification(
       &hfdcan1,
       FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0 );  // Interrupt when message received
+
+   TxHeader.IdType = FDCAN_STANDARD_ID;
+   TxHeader.Identifier = 0x123;
+   TxHeader.TxFrameType = FDCAN_DATA_FRAME;
+   TxHeader.DataLength = FDCAN_DLC_BYTES_2;
+   TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+   TxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+   TxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+   TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+   TxHeader.MessageMarker = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -113,6 +132,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  TxData[0] = 0xAB;
+	  TxData[1] = 0xCD;
+
+	  if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData) != HAL_OK)
+	  {
+	      Error_Handler();
+	  }
+
+	  HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -187,7 +215,7 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.DataSyncJumpWidth = 1;
   hfdcan1.Init.DataTimeSeg1 = 1;
   hfdcan1.Init.DataTimeSeg2 = 1;
-  hfdcan1.Init.StdFiltersNbr = 0;
+  hfdcan1.Init.StdFiltersNbr = 1;
   hfdcan1.Init.ExtFiltersNbr = 0;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)
@@ -197,6 +225,54 @@ static void MX_FDCAN1_Init(void)
   /* USER CODE BEGIN FDCAN1_Init 2 */
 
   /* USER CODE END FDCAN1_Init 2 */
+
+}
+
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
 
 }
 
@@ -245,6 +321,17 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t itFlags)
 
 
         HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+
+        printf("RX CAN ID: 0x%03X | DLC: %d | Data:", rxHeader.Identifier, rxHeader.DataLength);
+
+        uint8_t dlc = (rxHeader.DataLength >> 16) & 0x0F;
+        uint8_t length = FDCAN_DLC_TO_BYTES(rxHeader.DataLength);
+
+        for (int i = 0; i < length; i++)
+        {
+            printf(" %02X", rxData[i]);
+        }
+        printf("\r\n");
 
     }
 }
