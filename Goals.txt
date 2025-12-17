@@ -1,0 +1,99 @@
+**Short-term**
+-Essential
+--Basic FDCAN RX/TX working 
+--Loopback mode testing
+--Add proper TxHeader configuration (IDs, DLC, DataLength in bytes)
+--Error callbacks (bus-off, arbitration lost, etc.)
+--Hardware filter validation (not just accept‑all)
+
+-Additional
+--UART printf wrapper completed
+--Use logic analyzer to confirm CAN timings
+--Add LED/error indicators
+--Create CAN message database (DBC format) draft
+--Document wiring: transceiver → STM32 → CAN bus → MC/BMS
+
+**Mid-term**
+-Migrate to FreeRTOS
+--RX task + queue
+--TX task with buffer
+--CAN manager task for routing messages
+-Add mutexes for shared data
+-Implement watchdog timer
+
+-Make a CAN abstraction layer
+-Dynamic filter update function
+-Heartbeat message generation
+-Startup → Precharge → Ready‑to‑Drive CAN state machine
+
+-Motor Controller Integration
+--Create MC command frames (torque request, enable, faults)
+--Decode MC status frames (rpm, voltage, current, temperature)
+--Implement torque‑limiting logic on STM32
+
+-BMS Integration
+--Read pack voltage / current, cell temps, SOC/SOH
+--Relay control logic
+--BMS error → vehicle shutdown state machine
+
+-HVIL System
+--Learn HVIL fundamentals (interlock loop, continuity monitoring)
+--Add GPIO + CAN‑reported HVIL status
+--Implement HVIL fault detection → disable MC
+
+-Safety
+--Fault logger (store last N fault events in flash)
+--Emergency stop CAN behavior
+--Isolation fault handling
+
+-Tools
+--Set up Python or PC‑side CAN dashboard:
+---plot rpm/current/voltage
+---message sniffing
+--logging to CSV
+
+**Long-term**
+Full Vehicle Control System
+-Complete Vehicle Control Unit (VCU) architecture
+-Multi‑state system:
+1.OFF
+2.HVIL check
+3.Precharge
+4.Ready‑to‑Drive
+5.Drive
+6.Fault
+7.Shutdown
+
+-Advanced CAN Features (optional)
+--DBC parser inside STM32
+--Support multi‑frame CAN (ISO‑TP) if needed
+--CAN diagnostics (UDS if you ever use it)
+
+-Reliability (optional)
+--Implement A/B redundancy checks
+--Persistent flash settings
+--Firmware update over UART/CAN
+
+-Control Algorithms (optional)
+--Traction control (basic slip detection)
+--Torque vectoring (if dual motor someday)
+--Regen braking tuning
+
+-Vehicle Telemetry
+--Build wireless telemetry (BLE/WiFi/LoRa)
+--Real‑time dashboard app or web UI
+--Data logging with SD card
+
+-Hardware Expansion
+--Add sensors: wheel speed, steering angle, brake pressure, GPS + IMU integration
+
+-BMS / Charging
+--Expand CAN map to include charger
+--Implement charge state machine
+--Design pack‑pressure / vent detection
+
+-Final BAJA EV System Integration
+--Full HVIL harness
+--All safety circuits validated
+--Drive testing + log review
+--Debugging under vibration/heat dust conditions
