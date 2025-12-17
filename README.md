@@ -5,10 +5,10 @@
 - Added the first CAN filter (accept‑all) and learned why filters are mandatory for FDCAN.
 - Enabled RX interrupts and implemented a basic RX callback.
 - Debugged reception using GPIO toggling.
-
-**Next Goals**
 - Add UART debug prints for received CAN frames.
 - Add CAN transmit test.
+
+**Next Goals**
 - Implement loopback mode for self-testing.
 - Create FreeRTOS‑based CAN architecture (Rx task, Tx task, queues).
 - Start designing actual motor controller + BMS CAN map.
